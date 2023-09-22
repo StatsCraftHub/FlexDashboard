@@ -1,0 +1,94 @@
+---
+title: "Covid 19 Cases 2020 in UK"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Chart A NEW CASES LINE CHART
+
+```{r}
+
+library(readxl)
+COVID_data <- read_excel("D:/Anju/Projects/Flexdashboard/COVID-CasesDeathsHosp(Europe and Americas).xlsx")
+
+library(ggplot2)
+library(dplyr)
+library(scales)  
+
+# Create a column to show month and year
+
+COVID_data$month <- as.Date(cut(COVID_data$Date, breaks = 'month'))
+
+# Filter data by UK only
+
+COVID_dataUK <- COVID_data %>% filter(Location == "United Kingdom")
+
+# Group data by month and year with summing of new cases
+
+COVID_dataUKgrouped <- COVID_dataUK %>% 
+  group_by ( month ) %>% 
+  summarize( sum ( NewCases ) ) %>% 
+  select( month, "NewCases" = "sum(NewCases)" )
+
+# Line Graph result with grouping month and year with summing of new cases
+
+COVID_dataUKgrouped %>%
+  ggplot ( aes( x = month,  y = NewCases, label = NewCases)) +
+  geom_line(color = "blue", size = 2) +
+  scale_y_continuous(labels = comma, breaks = seq(0, 1500000, 100000)) +
+  scale_x_date(date_labels = "%b-%y" , breaks = "1 month") + 
+  theme(axis.text.x = element_text ( size = 10, angle = 90)) +  
+  labs(x = "Month", y = "New Cases") +
+  geom_point(color = "blue", size = 3) +
+  geom_text( aes (label = NewCases), vjust = -0.5, hjust = 0, nudge_x = -0.2)
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B NEW CASES BAR CHART
+
+```{r}
+# Create a column to show month and year
+COVID_data$month <-
+  as.Date(cut(COVID_data$Date, breaks = 'month'))
+
+# Filter data by UK only
+
+COVID_data %>%
+  filter(Location == "United Kingdom") %>%
+  
+  # Bar plot - Sum of Cases in the UK by Month & Year with x & y axis formatting
+  
+  ggplot ( aes( x = month,  y = NewCases)) +
+  geom_col(fill = "darkblue") +
+  scale_y_continuous(labels = comma, breaks = seq(0, 1800000, 100000)) +
+  scale_x_date(date_labels = "%b-%y" , breaks = "1 month") +
+  theme(axis.text.x = element_text ( size = 10, angle = 90)) +
+  labs(x = "Date", y = "New Cases")
+```
+
+### Chart C NEW CASES STACKED BAR CHART
+
+```{r}
+ggplot(COVID_data, aes(x = Date)) +
+  geom_bar(aes(y = NewCases, fill = "New Cases"), stat = "identity") +
+  geom_bar(aes(y = HospitalPatients, fill = "Hospital Patients"), stat = "identity") +
+  labs(title = "COVID-19 New Cases and Hospital Patients",
+       x = "Date",
+       y = "Count") +
+  scale_fill_manual(values = c("New Cases" = "blue", "Hospital Patients" = "red")) +
+  theme_minimal()
+```
+
